@@ -454,7 +454,7 @@ dictType objectKeyHeapPointerValueDictType = {
 
 static void observeDebounceKeyDestructor(dict *d, void *val) {
     UNUSED(d);
-    observeDebounceKey *odk = (observeDebounceKey*)val;
+    observeDebounceKey *odk = (observeDebounceKey *)val;
     if (odk) {
         if (odk->key) decrRefCount(odk->key);
         zfree(odk);
@@ -462,12 +462,12 @@ static void observeDebounceKeyDestructor(dict *d, void *val) {
 }
 
 dictType observeDebounceBufferDictType = {
-    dictEncObjHash,              /* hash function */
-    NULL,                        /* key dup */
-    dictEncObjKeyCompare,        /* key compare */
-    dictObjectDestructor,        /* key destructor */
-    observeDebounceKeyDestructor,  /* val destructor */
-    NULL                         /* allow to expand */
+    dictEncObjHash,               /* hash function */
+    NULL,                         /* key dup */
+    dictEncObjKeyCompare,         /* key compare */
+    dictObjectDestructor,         /* key destructor */
+    observeDebounceKeyDestructor, /* val destructor */
+    NULL                          /* allow to expand */
 };
 
 /* Set dictionary type. Keys are SDS strings, values are not used. */
@@ -4119,12 +4119,8 @@ int processCommand(client *c) {
 
     /* Only allow a subset of commands in the context of OBSERVE if the
      * connection is in RESP2 mode. With RESP3 there are no limits. */
-    if ((c->flag.observing && c->resp == 2) &&
-        c->cmd->proc != pingCommand &&
-        c->cmd->proc != quitCommand &&
-        c->cmd->proc != resetCommand &&
-        c->cmd->proc != unobserveCommand &&
-        !isObserveCommand(c->cmd)) {
+    if ((c->flag.observing && c->resp == 2) && c->cmd->proc != pingCommand && c->cmd->proc != quitCommand &&
+        c->cmd->proc != resetCommand && c->cmd->proc != unobserveCommand && !isObserveCommand(c->cmd)) {
         rejectCommandFormat(c,
                             "Can't execute '%s': only OBSERVE / "
                             "UNOBSERVE / PING / QUIT / RESET are allowed in this context",
@@ -5393,9 +5389,8 @@ void releaseInfoSectionDict(dict *sec) {
  * 'out_all' and 'out_everything' are optional.
  * The resulting dictionary should be released with releaseInfoSectionDict. */
 dict *genInfoSectionDict(robj **argv, int argc, char **defaults, int *out_all, int *out_everything) {
-    char *default_sections[] = {"server", "clients",     "memory",     "persistence", "stats",    "replication",
-                                "cpu",    "module_list", "errorstats", "cluster",     "keyspace", "observe",
-                                NULL};
+    char *default_sections[] = {"server",      "clients",    "memory",  "persistence", "stats",   "replication", "cpu",
+                                "module_list", "errorstats", "cluster", "keyspace",    "observe", NULL};
     if (!defaults) defaults = default_sections;
 
     if (argc == 0) {
@@ -5830,15 +5825,15 @@ sds genValkeyInfoString(dict *section_dict, int all_sections, int everything) {
     /* Observe */
     if (all_sections || (dictFind(section_dict, "observe") != NULL)) {
         if (sections++) info = sdscat(info, "\r\n");
-        
+
         /* Count total active watch commands */
         unsigned long total_observe_commands = 0;
         unsigned long total_observe_keys = 0;
         unsigned long total_observe_subscriptions = 0;
-        
+
         if (server.observe_fingerprints) {
             total_observe_commands = dictSize(server.observe_fingerprints);
-            
+
             /* Count total subscriptions across all watch commands */
             dictIterator *di = dictGetSafeIterator(server.observe_fingerprints);
             dictEntry *de;
@@ -5850,25 +5845,23 @@ sds genValkeyInfoString(dict *section_dict, int all_sections, int everything) {
             }
             dictReleaseIterator(di);
         }
-        
+
         if (server.observe_key_to_fingerprints) {
             total_observe_keys = dictSize(server.observe_key_to_fingerprints);
         }
-        
+
         /* Count active watch connections across all clients */
         listIter li;
         listRewind(server.clients, &li);
-        
+
         info = sdscatprintf(info,
-            "# Observe\r\n"
-            "observe_connections:%lu\r\n"
-            "observe_commands_active:%lu\r\n"
-            "observe_keys_tracked:%lu\r\n"
-            "observe_total_subscriptions:%lu\r\n",
-            (unsigned long)server.observing_clients,
-            total_observe_commands,
-            total_observe_keys,
-            total_observe_subscriptions);
+                            "# Observe\r\n"
+                            "observe_connections:%lu\r\n"
+                            "observe_commands_active:%lu\r\n"
+                            "observe_keys_tracked:%lu\r\n"
+                            "observe_total_subscriptions:%lu\r\n",
+                            (unsigned long)server.observing_clients, total_observe_commands, total_observe_keys,
+                            total_observe_subscriptions);
     }
 
     /* Replication */
@@ -6120,6 +6113,10 @@ void infoCommand(client *c) {
     return;
 }
 
+void helloCommand(client *c) {
+    addReplyBulkCString(c, "Hello from DiceDB");
+}
+
 void monitorCommand(client *c) {
     if (c->flag.deny_blocking) {
         /**
@@ -6269,7 +6266,8 @@ void serverAsciiArt(void) {
         serverLog(LL_NOTICE, "Running mode=%s, port=%d.", mode, server.port ? server.port : server.tls_port);
     } else {
         snprintf(buf, 1024 * 16, ascii_logo, DICEDB_VERSION, serverGitSHA1(), strtol(serverGitDirty(), NULL, 10) > 0,
-                 (sizeof(long) == 8) ? "64" : "32", VALKEY_VERSION, mode, server.port ? server.port : server.tls_port, (long)getpid());
+                 (sizeof(long) == 8) ? "64" : "32", VALKEY_VERSION, mode, server.port ? server.port : server.tls_port,
+                 (long)getpid());
         serverLogRaw(LL_NOTICE | LL_RAW, buf);
     }
     zfree(buf);
@@ -6519,8 +6517,8 @@ void dismissMemoryInChild(void) {
     /* madvise(MADV_DONTNEED) may not work if Transparent Huge Pages is enabled. */
     if (server.thp_enabled) return;
 
-        /* Currently we use zmadvise_dontneed only when we use jemalloc with Linux.
-         * so we avoid these pointless loops when they're not going to do anything. */
+    /* Currently we use zmadvise_dontneed only when we use jemalloc with Linux.
+     * so we avoid these pointless loops when they're not going to do anything. */
 #if defined(USE_JEMALLOC) && defined(__linux__)
     listIter li;
     listNode *ln;
@@ -7032,7 +7030,7 @@ int main(int argc, char **argv) {
     }
     if (server.sentinel_mode) sentinelCheckConfigFile();
 
-        /* Do system checks */
+    /* Do system checks */
 #ifdef __linux__
     linuxMemoryWarnings();
     sds err_msg = NULL;
