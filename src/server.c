@@ -6129,6 +6129,35 @@ void replStatusCommand(client *c) {
     addReplyVerbatim(c, result, sdslen(result), "txt");
     sdsfree(result);
 }
+void clusterHealthCommand(client *c) {
+    sds info = sdsempty();
+
+    info = sdscatprintf(info, "Cluster Health Report\r\n"
+                              "---------------------\r\n");
+
+    /* Cluster disabled */
+    if (server.cluster == NULL) {
+        info = sdscatprintf(info, "Cluster Mode: Disabled\r\n");
+    } else {
+        /* Cluster state */
+        info = sdscatprintf(info, "Cluster State: %s\r\n", server.cluster->state == CLUSTER_OK ? "OK" : "FAIL");
+
+        /* Number of primary nodes */
+        info = sdscatprintf(info, "Primary Nodes: %d\r\n", server.cluster->size);
+
+        /* Total known nodes */
+        info = sdscatprintf(info, "Known Nodes: %lu\r\n", (unsigned long)dictSize(server.cluster->nodes));
+
+        /* Current cluster epoch */
+        info = sdscatprintf(info, "Current Epoch: %llu\r\n", (unsigned long long)server.cluster->currentEpoch);
+
+        /* Nodes currently in PFAIL state */
+        info = sdscatprintf(info, "PFAIL Nodes: %lld\r\n", server.cluster->stats_pfail_nodes);
+    }
+
+    addReplyBulkCString(c, info);
+    sdsfree(info);
+}
 
 void monitorCommand(client *c) {
     if (c->flag.deny_blocking) {
