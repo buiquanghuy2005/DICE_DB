@@ -614,21 +614,21 @@ typedef enum {
 
 /* Keyspace changes notification classes. Every class is associated with a
  * character for configuration purposes. */
-#define NOTIFY_KEYSPACE (1 << 0)  /* K */
-#define NOTIFY_KEYEVENT (1 << 1)  /* E */
-#define NOTIFY_GENERIC (1 << 2)   /* g */
-#define NOTIFY_STRING (1 << 3)    /* $ */
-#define NOTIFY_LIST (1 << 4)      /* l */
-#define NOTIFY_SET (1 << 5)       /* s */
-#define NOTIFY_HASH (1 << 6)      /* h */
-#define NOTIFY_ZSET (1 << 7)      /* z */
-#define NOTIFY_EXPIRED (1 << 8)   /* x */
-#define NOTIFY_EVICTED (1 << 9)   /* e */
-#define NOTIFY_STREAM (1 << 10)   /* t */
-#define NOTIFY_KEY_MISS (1 << 11) /* m (Note: This one is excluded from NOTIFY_ALL on purpose) */
-#define NOTIFY_LOADED (1 << 12)   /* module only key space notification, indicate a key loaded from rdb */
-#define NOTIFY_MODULE (1 << 13)   /* d, module key space notification */
-#define NOTIFY_NEW (1 << 14)      /* n, new key notification */
+#define NOTIFY_KEYSPACE (1 << 0)     /* K */
+#define NOTIFY_KEYEVENT (1 << 1)     /* E */
+#define NOTIFY_GENERIC (1 << 2)      /* g */
+#define NOTIFY_STRING (1 << 3)       /* $ */
+#define NOTIFY_LIST (1 << 4)         /* l */
+#define NOTIFY_SET (1 << 5)          /* s */
+#define NOTIFY_HASH (1 << 6)         /* h */
+#define NOTIFY_ZSET (1 << 7)         /* z */
+#define NOTIFY_EXPIRED (1 << 8)      /* x */
+#define NOTIFY_EVICTED (1 << 9)      /* e */
+#define NOTIFY_STREAM (1 << 10)      /* t */
+#define NOTIFY_KEY_MISS (1 << 11)    /* m (Note: This one is excluded from NOTIFY_ALL on purpose) */
+#define NOTIFY_LOADED (1 << 12)      /* module only key space notification, indicate a key loaded from rdb */
+#define NOTIFY_MODULE (1 << 13)      /* d, module key space notification */
+#define NOTIFY_NEW (1 << 14)         /* n, new key notification */
 #define NOTIFY_PREEVICTION (1 << 15) /* p, pre-eviction notification (module only) */
 #define NOTIFY_PREMISS (1 << 16)     /* P, pre-miss notification for lazy loading (module only) */
 #define NOTIFY_ALL                                                                                                     \
@@ -1189,7 +1189,7 @@ typedef struct ClientFlags {
     uint64_t pre_psync : 1;           /* Instance don't understand PSYNC. */
     uint64_t readonly : 1;            /* Cluster client is in read-only state. */
     uint64_t pubsub : 1;              /* Client is in Pub/Sub mode. */
-    uint64_t observing : 1;            /* Client is in observe mode. */
+    uint64_t observing : 1;           /* Client is in observe mode. */
     uint64_t prevent_aof_prop : 1;    /* Don't propagate to AOF. */
     uint64_t prevent_repl_prop : 1;   /* Don't propagate to replicas. */
     uint64_t prevent_prop : 1;        /* Don't propagate to AOF or replicas. */
@@ -1228,22 +1228,23 @@ typedef struct ClientFlags {
     uint64_t replication_done : 1;         /* Indicate that replication has been done on the client */
     uint64_t authenticated : 1;            /* Indicate a client has successfully authenticated */
     uint64_t ever_authenticated : 1; /* Indicate a client was ever successfully authenticated during it's lifetime */
-    uint64_t
-        protected_rdb_channel : 1; /* Dual channel replication sync: Protects the RDB client from premature \
-                                    * release during full sync. This flag is used to ensure that the RDB client, which \
-                                    * references the first replication data block required by the replica, is not \
-                                    * released prematurely. Protecting the client is crucial for prevention of \
-                                    * synchronization failures: \
-                                    * If the RDB client is released before the replica initiates PSYNC, the primary \
-                                    * will reduce the reference count (o->refcount) of the block needed by the replica.
-                                    * \
-                                    * This could potentially lead to the removal of the required data block, resulting \
-                                    * in synchronization failures. Such failures could occur even in scenarios where \
-                                    * the replica only needs an additional 4KB beyond the minimum size of the
-                                    * repl_backlog.
-                                    * By using this flag, we ensure that the RDB client remains intact until the replica
-                                    * \ has successfully initiated PSYNC. */
-    uint64_t repl_rdb_channel : 1; /* Dual channel replication sync: track a connection which is used for rdb snapshot */
+    uint64_t protected_rdb_channel
+        : 1; /* Dual channel replication sync: Protects the RDB client from premature \
+              * release during full sync. This flag is used to ensure that the RDB client, which \
+              * references the first replication data block required by the replica, is not \
+              * released prematurely. Protecting the client is crucial for prevention of \
+              * synchronization failures: \
+              * If the RDB client is released before the replica initiates PSYNC, the primary \
+              * will reduce the reference count (o->refcount) of the block needed by the replica.
+              * \
+              * This could potentially lead to the removal of the required data block, resulting \
+              * in synchronization failures. Such failures could occur even in scenarios where \
+              * the replica only needs an additional 4KB beyond the minimum size of the
+              * repl_backlog.
+              * By using this flag, we ensure that the RDB client remains intact until the replica
+              * \ has successfully initiated PSYNC. */
+    uint64_t repl_rdb_channel
+        : 1; /* Dual channel replication sync: track a connection which is used for rdb snapshot */
     uint64_t dont_cache_primary : 1; /* In some cases we don't want to cache the primary. For example, the replica
                                       * knows that it does not need the cache and required a full sync. With this
                                       * flag, we won't cache the primary in freeClient. */
@@ -1443,8 +1444,8 @@ struct sharedObjectsStruct {
         *emptyset[4], *emptyarray, *wrongtypeerr, *nokeyerr, *syntaxerr, *sameobjecterr, *outofrangeerr, *noscripterr,
         *loadingerr, *slowevalerr, *slowscripterr, *slowmoduleerr, *bgsaveerr, *primarydownerr, *roreplicaerr,
         *execaborterr, *noautherr, *noreplicaserr, *busykeyerr, *oomerr, *plus, *messagebulk, *pmessagebulk,
-        *subscribebulk, *unsubscribebulk, *psubscribebulk, *punsubscribebulk, *del, *unlink, *evict, *rpop, *lpop, *lpush,
-        *rpoplpush, *lmove, *blmove, *zpopmin, *zpopmax, *emptyscan, *multi, *exec, *left, *right, *hset, *srem,
+        *subscribebulk, *unsubscribebulk, *psubscribebulk, *punsubscribebulk, *del, *unlink, *evict, *rpop, *lpop,
+        *lpush, *rpoplpush, *lmove, *blmove, *zpopmin, *zpopmax, *emptyscan, *multi, *exec, *left, *right, *hset, *srem,
         *xgroup, *xclaim, *script, *replconf, *eval, *persist, *set, *pexpireat, *pexpire, *time, *pxat, *absttl,
         *retrycount, *force, *justid, *entriesread, *lastid, *ping, *setid, *keepttl, *load, *createconsumer, *getack,
         *special_asterick, *special_equals, *default_username, *redacted, *ssubscribebulk, *sunsubscribebulk,
@@ -2162,14 +2163,14 @@ struct valkeyServer {
     kvstore *pubsubshard_channels; /* Map shard channels in every slot to list of subscribed clients */
     unsigned int pubsub_clients;   /* # of clients in Pub/Sub mode */
     unsigned int watching_clients; /* # of clients are watching keys */
-    
+
     /* Observe */
-    dict *observe_fingerprints;           /* Map fingerprints to follow command info */
-    dict *observe_key_to_fingerprints;    /* Map keys to list of fingerprints observing them */
-    unsigned int observing_clients;       /* # of clients using .OBSERVE commands */
+    dict *observe_fingerprints;        /* Map fingerprints to follow command info */
+    dict *observe_key_to_fingerprints; /* Map keys to list of fingerprints observing them */
+    unsigned int observing_clients;    /* # of clients using .OBSERVE commands */
 
     dict *observe_debounce_buffer;        /* Buffer of keys that need observe notifications */
-    unsigned int observe_debounce_period;     /* Debounce period in milliseconds */
+    unsigned int observe_debounce_period; /* Debounce period in milliseconds */
 
     /* Cluster */
     int cluster_enabled;            /* Is cluster enabled? */
@@ -2215,7 +2216,8 @@ struct valkeyServer {
     int pre_command_oom_state;      /* OOM before command (script?) was started */
     int script_disable_deny_script; /* Allow running commands marked "noscript" inside a script. */
     int lua_enable_insecure_api;    /* Config to enable insecure api */
-    int lua_insecure_api_current;   /* Current value of if insecure apis are enabled, used to determine if flush is needed. */
+    int lua_insecure_api_current;   /* Current value of if insecure apis are enabled, used to determine if flush is
+                                       needed. */
     /* Lazy free */
     int lazyfree_lazy_eviction;
     int lazyfree_lazy_expire;
@@ -3442,17 +3444,17 @@ dict *getClientPubSubShardChannels(client *c);
 
 /* Observe */
 typedef struct observeCommandInfo {
-    sds command;          /* Command name of the observed command (e.g., "GET", "ZRANGE") */
-    int argc;             /* Number of arguments */
-    robj **argv;          /* Command arguments */
-    robj *key;            /* The key being followed */
-    list *clients;        /* List of clients subscribed to this fingerprint */
+    sds command;   /* Command name of the observed command (e.g., "GET", "ZRANGE") */
+    int argc;      /* Number of arguments */
+    robj **argv;   /* Command arguments */
+    robj *key;     /* The key being followed */
+    list *clients; /* List of clients subscribed to this fingerprint */
 } observeCommandInfo;
 
 typedef struct observeDebounceKey {
-    robj *key;            /* The key that changed */
-    int dbid;             /* Database ID where the key changed */
-    mstime_t timestamp;   /* When the key was first added to buffer */
+    robj *key;          /* The key that changed */
+    int dbid;           /* Database ID where the key changed */
+    mstime_t timestamp; /* When the key was first added to buffer */
 } observeDebounceKey;
 
 typedef void (*observeCommandHandler)(client *c);
@@ -3584,11 +3586,11 @@ robj *objectCommandLookup(client *c, robj *key);
 robj *objectCommandLookupOrReply(client *c, robj *key, robj *reply);
 int objectSetLRUOrLFU(robj *val, long long lfu_freq, long long lru_idle, long long lru_clock, int lru_multiplier);
 #define LOOKUP_NONE 0
-#define LOOKUP_NOTOUCH (1 << 0)  /* Don't update LRU. */
-#define LOOKUP_NONOTIFY (1 << 1) /* Don't trigger keyspace event on key misses. */
-#define LOOKUP_NOSTATS (1 << 2)  /* Don't update keyspace hits/misses counters. */
-#define LOOKUP_WRITE (1 << 3)    /* Delete expired keys even in replicas. */
-#define LOOKUP_NOEXPIRE (1 << 4) /* Avoid deleting lazy expired keys. */
+#define LOOKUP_NOTOUCH (1 << 0)   /* Don't update LRU. */
+#define LOOKUP_NONOTIFY (1 << 1)  /* Don't trigger keyspace event on key misses. */
+#define LOOKUP_NOSTATS (1 << 2)   /* Don't update keyspace hits/misses counters. */
+#define LOOKUP_WRITE (1 << 3)     /* Delete expired keys even in replicas. */
+#define LOOKUP_NOEXPIRE (1 << 4)  /* Avoid deleting lazy expired keys. */
 #define LOOKUP_NOPREMISS (1 << 5) /* Don't trigger pre-miss notification for lazy loading. */
 #define LOOKUP_NOEFFECTS                                                                                               \
     (LOOKUP_NONOTIFY | LOOKUP_NOSTATS | LOOKUP_NOTOUCH | LOOKUP_NOEXPIRE) /* Avoid any effects from fetching the key */
@@ -3790,6 +3792,7 @@ char *serverBuildIdString(void);
 void authCommand(client *c);
 void pingCommand(client *c);
 void echoCommand(client *c);
+void replStatusCommand(client *c);
 void commandCommand(client *c);
 void commandCountCommand(client *c);
 void commandListCommand(client *c);

@@ -6113,8 +6113,21 @@ void infoCommand(client *c) {
     return;
 }
 
-void helloCommand(client *c) {
-    addReplyBulkCString(c, "Hello from DiceDB");
+void replStatusCommand(client *c) {
+    sds result = sdsempty();
+
+    result = sdscatprintf(result,
+                          "Replication Status\r\n"
+                          "------------------\r\n"
+                          "Primary Replication Offset: %lld\r\n"
+                          "Second Replication Offset: %lld\r\n"
+                          "Backlog Active: %d\r\n"
+                          "Backlog Size: %lld\r\n",
+                          server.primary_repl_offset, server.second_replid_offset, server.repl_backlog != NULL,
+                          server.repl_backlog_size);
+
+    addReplyVerbatim(c, result, sdslen(result), "txt");
+    sdsfree(result);
 }
 
 void monitorCommand(client *c) {
